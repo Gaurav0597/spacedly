@@ -1,12 +1,12 @@
 import passport from 'passport';
-import { Strategy, GoogleStrategy } from 'passport-google-oauth20';
+import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import User from '../models/user.model';
 
 passport.use(
   new GoogleStrategy(
     {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      clientID: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
       callbackURL: '/api/auth/google/callback',
     },
     async (accessToken, refreshToken, profile, done) => {
@@ -18,8 +18,10 @@ passport.use(
         }
 
         let user = await User.findOne({ where: { google_id: profile.id } });
+
         if (!user) {
           user = await User.findOne({ where: { email } });
+
           if (user) {
             user.google_id = profile.id;
             user.auth_provider = 'google';
@@ -36,6 +38,7 @@ passport.use(
             });
           }
         }
+
         return done(null, user);
       } catch (error) {
         return done(error as Error, null);
