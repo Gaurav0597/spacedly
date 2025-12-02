@@ -28,9 +28,8 @@ export const authMiddleware = async (
 ) => {
   try {
     const { accessToken, refreshToken } = req.cookies;
-
     if (!accessToken && !refreshToken) return unauthorized(res);
-
+    console.log({ refreshToken });
     // 1️⃣ Verify access token
     if (accessToken) {
       try {
@@ -50,7 +49,6 @@ export const authMiddleware = async (
 
     // 2️⃣ Verify refresh token
     if (!refreshToken) return unauthorized(res);
-
     let decodedRefresh;
     try {
       decodedRefresh = jwt.verify(
@@ -60,10 +58,10 @@ export const authMiddleware = async (
     } catch {
       return unauthorized(res);
     }
-
     // 3️⃣ Check user exists + refresh token matches DB
     const user = await User.findByPk(decodedRefresh.id);
-    if (!user || user.refresh_token !== refreshToken) return unauthorized(res);
+    console.log(user.refresh_token);
+    if (!user || user.refresh_token != refreshToken) return unauthorized(res);
 
     // 4️⃣ Generate new access token
     const newAccessToken = generateAccessToken(user.id, user.email);

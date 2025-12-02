@@ -3,6 +3,7 @@ import HTTP_STATUS from '../constants';
 import fs from 'fs';
 import path from 'path';
 import Task from '../models/task.model';
+import TaskAttachment from '../models/taskAttachment.model';
 
 interface CreateTaskInput {
   userId: string;
@@ -18,25 +19,25 @@ export const createTask = async (taskData: CreateTaskInput) => {
   return task;
 };
 
-// export const getAllUserTasks = async (userId: string) => {
-//   const tasks = await Task.findAll({
-//     where: { userId },
-//     include: [
-//       {
-//         model: TaskAttachment,
-//         as: 'attachments',
-//         attributes: [
-//           'id',
-//           'fileName',
-//           'originalName',
-//           'fileSize',
-//           'fileType',
-//           'fileUrl',
-//         ],
-//       },
-//     ],
-//     order: [['createdAt', 'DESC']],
-//   });
+export const getAllUserTasks = async (userId: string) => {
+  const tasks = await Task.findAll({
+    where: { userId },
+    include: [
+      {
+        model: TaskAttachment,
+        as: 'attachments',
+        attributes: [
+          'id',
+          'fileName',
+          'originalName',
+          'fileSize',
+          'fileType',
+          'fileUrl',
+        ],
+      },
+    ],
+    order: [['createdAt', 'DESC']],
+  });
 
-//   return tasks;
-// };
+  return tasks;
+};

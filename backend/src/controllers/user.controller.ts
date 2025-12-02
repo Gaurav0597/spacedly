@@ -101,12 +101,12 @@ export const verifyOtp = asyncWrapper(async (req: Request, res: Response) => {
   // OTP is valid → clear it
   user.two_factor_otp = null;
   user.two_factor_otp_expiry = null;
-  await user.save();
 
   // Generate tokens
   const accessToken = generateAccessToken(user.id, user.email);
   const refreshToken = generateRefreshToken(user.id, user.email);
-
+  user.refresh_token = refreshToken;
+  await user.save();
   // Send cookie
   res.cookie('accessToken', accessToken, {
     httpOnly: true,

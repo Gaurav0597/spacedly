@@ -3,7 +3,7 @@ import baseRoutes from './routes/index';
 import cookieParser from 'cookie-parser';
 import { errorHandler, routeNotFound } from './middlewares/errorHandler';
 import passport from './config/passport';
-
+import './models/associations';
 const app = express();
 app.use(express.json());
 app.use(cookieParser());

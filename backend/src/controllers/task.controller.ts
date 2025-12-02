@@ -10,7 +10,6 @@ import HTTP_STATUS from '../constants';
 import asyncWrapper from '../utils/asyncWrapper';
 import * as taskService from '../services/task.service';
 
-
 export const createTask = asyncWrapper(
   async (req: CustomRequest, res: Response) => {
     const { id: userId } = req.user!;
@@ -27,12 +26,12 @@ export const createTask = asyncWrapper(
   },
 );
 
-// export const getTasks = asyncWrapper(
-//   async (req: CustomRequest, res: Response) => {
-//     const { id: userId } = req.user!;
-
-//     const tasks = await taskService.getAllUserTasks(String(userId));
-
-//     return ApiResponse.success(res, { tasks }, 'Tasks retrieved successfully');
-//   },
-// );
+export const getTasks = asyncWrapper(
+  async (req: CustomRequest, res: Response) => {
+    const { id: userId } = req.user!;
+    console.log(userId);
+    const tasks = await taskService.getAllUserTasks(String(userId));
+    console.log(tasks);
+    return ApiResponse.success(res, { tasks }, 'Tasks retrieved successfully');
+  },
+);
