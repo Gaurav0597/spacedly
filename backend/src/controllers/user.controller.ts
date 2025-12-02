@@ -94,9 +94,9 @@ export const verifyOtp = asyncWrapper(async (req: Request, res: Response) => {
   }
 
   // Check expiry
-  // if (new Date() > new Date(user.two_factor_otp_expiry)) {
-  //   return ApiResponse.error(res, 'OTP expired', HTTP_STATUS.BAD_REQUEST);
-  // }
+  if (new Date() > new Date(user.two_factor_otp_expiry)) {
+    return ApiResponse.error(res, 'OTP expired', HTTP_STATUS.BAD_REQUEST);
+  }
 
   // OTP is valid → clear it
   user.two_factor_otp = null;

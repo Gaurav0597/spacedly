@@ -5,11 +5,13 @@ class User extends Model {
   public id!: number;
   public name!: string;
   public email!: string;
-  public password!: string;
+  public password!: string | null;
   public refresh_token!: string | null;
   public is_two_factor_enabled!: boolean;
   public two_factor_otp!: string;
   public two_factor_otp_expiry!: Date;
+  public google_id!: string | null;
+  public auth_provider!: 'local' | 'google';
 
   // timestamps!
   public readonly createdAt!: Date;
@@ -34,7 +36,7 @@ User.init(
     },
     password: {
       type: DataTypes.STRING,
-      allowNull: false,
+      allowNull: true,
     },
     refresh_token: {
       type: DataTypes.STRING,
@@ -51,6 +53,16 @@ User.init(
     two_factor_otp_expiry: {
       type: DataTypes.DATE,
       allowNull: true,
+    },
+    google_id: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: true,
+    },
+    auth_provider: {
+      type: DataTypes.ENUM('local', 'google'),
+      allowNull: false,
+      defaultValue: 'local',
     },
   },
   { modelName: 'User', timestamps: true, tableName: 'users', sequelize },
