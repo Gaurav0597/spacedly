@@ -42,10 +42,11 @@ export const userLogin = async ({ email, password }) => {
   return {
     refreshToken,
     accessToken,
-    user: {
+    user_data: {
       id: user.id,
       name: user.name,
       email: user.email,
+      is_two_factor_enabled: user.is_two_factor_enabled,
     },
   };
 };

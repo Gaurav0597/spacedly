@@ -7,6 +7,9 @@ class User extends Model {
   public email!: string;
   public password!: string;
   public refresh_token!: string | null;
+  public is_two_factor_enabled!: boolean;
+  public two_factor_otp!: string;
+  public two_factor_otp_expiry!: Date;
 
   // timestamps!
   public readonly createdAt!: Date;
@@ -35,6 +38,18 @@ User.init(
     },
     refresh_token: {
       type: DataTypes.STRING,
+      allowNull: true,
+    },
+    is_two_factor_enabled: {
+      type: DataTypes.BOOLEAN,
+      allowNull: true,
+    },
+    two_factor_otp: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+    two_factor_otp_expiry: {
+      type: DataTypes.DATE,
       allowNull: true,
     },
   },
