@@ -31,6 +31,6 @@ export const generateRefreshToken = (userId: number, email: string): string => {
   const payload = { id: userId, email };
 
   return jwt.sign(payload, process.env.JWT_REFRESH_SECRET!, {
-    expiresIn: '30d',
+    expiresIn: '1d',
   });
 };

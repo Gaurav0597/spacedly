@@ -35,3 +35,47 @@ export const getTasks = asyncWrapper(
     return ApiResponse.success(res, { tasks }, 'Tasks retrieved successfully');
   },
 );
+
+export const getTask = asyncWrapper(
+  async (req: CustomRequest, res: Response) => {
+    const { id: userId } = req.user!;
+    const { id: taskId } = req.params;
+
+    const task = await taskService.getTaskById(taskId, String(userId));
+
+    return ApiResponse.success(res, { task }, 'Task retrieved successfully');
+  },
+);
+
+
+export const updateTask = asyncWrapper(
+  async (req: CustomRequest, res: Response) => {
+    const { id: userId } = req.user!;
+    const { id: taskId } = req.params;
+    const updateData = req.body;
+
+    await updateTaskSchema.validateAsync(updateData);
+
+    const task = await taskService.updateTask(
+      taskId,
+      String(userId),
+      updateData,
+    );
+
+    return ApiResponse.success(res, { task }, 'Task updated successfully');
+  },
+);
+
+export const deleteTask = asyncWrapper(
+  async (req: CustomRequest, res: Response) => {
+    const { id: userId } = req.user!;
+    const { id: taskId } = req.params;
+
+    await taskService.deleteTask(taskId, String(userId));
+
+    return ApiResponse.success(res, {}, 'Task deleted successfully');
+  },
+);
+
+
+
