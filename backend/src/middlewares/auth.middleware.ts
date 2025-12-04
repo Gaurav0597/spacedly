@@ -4,7 +4,11 @@ import User from '../models/user.model';
 import { generateAccessToken } from '../helpers/auth';
 
 export interface CustomRequest extends Request {
-  user?: { id: number; email: string };
+  user?: { id: string; email: string };
+  body: any;
+  params: any;
+  files?: any;
+  cookies: any;
 }
 
 // Helper to send 401
@@ -28,8 +32,9 @@ export const authMiddleware = async (
 ) => {
   try {
     const { accessToken, refreshToken } = req.cookies;
+
     if (!accessToken && !refreshToken) return unauthorized(res);
-    console.log({ refreshToken });
+
     // 1️⃣ Verify access token
     if (accessToken) {
       try {
@@ -49,6 +54,7 @@ export const authMiddleware = async (
 
     // 2️⃣ Verify refresh token
     if (!refreshToken) return unauthorized(res);
+
     let decodedRefresh;
     try {
       decodedRefresh = jwt.verify(
@@ -58,18 +64,18 @@ export const authMiddleware = async (
     } catch {
       return unauthorized(res);
     }
+
     // 3️⃣ Check user exists + refresh token matches DB
     const user = await User.findByPk(decodedRefresh.id);
-    console.log(user.refresh_token);
-    if (!user || user.refresh_token != refreshToken) return unauthorized(res);
+    if (!user || user.refresh_token !== refreshToken) return unauthorized(res);
 
     // 4️⃣ Generate new access token
     const newAccessToken = generateAccessToken(user.id, user.email);
 
     res.cookie('accessToken', newAccessToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
       maxAge: 15 * 60 * 1000, // 15 min
     });
 

@@ -8,7 +8,6 @@ router.use(authMiddleware);
 
 router.route('/').post(taskcontroller.createTask).get(taskcontroller.getTasks);
 
-
 router
   .route('/:id')
   .get(taskcontroller.getTask)

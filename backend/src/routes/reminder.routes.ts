@@ -1,9 +1,9 @@
-import express from 'express'
-import { authMiddleware } from '../middlewares/auth.middleware'
+import express from 'express';
+import { authMiddleware } from '../middlewares/auth.middleware';
 import * as reminderController from '../controllers/reminder.controller';
-const router = express.Router()
+const router = express.Router();
 
-router.use(authMiddleware)
+router.use(authMiddleware);
 
 router
   .route('/')
@@ -15,4 +15,4 @@ router
   .put(reminderController.updateReminder)
   .delete(reminderController.deleteReminder);
 
-export default router
+export default router;

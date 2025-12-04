@@ -19,7 +19,7 @@ export const comparePassword = async (
 
 // Function to generate JWT token
 
-export const generateAccessToken = (userId: number, email: string): string => {
+export const generateAccessToken = (userId: string, email: string): string => {
   const payload = { id: userId, email };
 
   return jwt.sign(payload, process.env.JWT_ACCESS_SECRET!, {
@@ -27,10 +27,31 @@ export const generateAccessToken = (userId: number, email: string): string => {
   });
 };
 
-export const generateRefreshToken = (userId: number, email: string): string => {
+export const generateRefreshToken = (userId: string, email: string): string => {
   const payload = { id: userId, email };
 
   return jwt.sign(payload, process.env.JWT_REFRESH_SECRET!, {
-    expiresIn: '1d',
+    expiresIn: '30d',
+  });
+};
+
+// Function to set authentication cookies
+export const setAuthCookies = (
+  res: any,
+  accessToken: string,
+  refreshToken: string,
+): void => {
+  res.cookie('accessToken', accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 15 * 60 * 1000, // 15 mins
+  });
+
+  res.cookie('refreshToken', refreshToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 24 * 60 * 60 * 1000, // 1 day
   });
 };

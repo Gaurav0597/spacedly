@@ -47,7 +47,6 @@ export const getTask = asyncWrapper(
   },
 );
 
-
 export const updateTask = asyncWrapper(
   async (req: CustomRequest, res: Response) => {
     const { id: userId } = req.user!;
@@ -76,6 +75,3 @@ export const deleteTask = asyncWrapper(
     return ApiResponse.success(res, {}, 'Task deleted successfully');
   },
 );
-
-
-

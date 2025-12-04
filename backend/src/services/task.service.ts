@@ -94,7 +94,6 @@ export const updateTask = async (
   return updatedTask;
 };
 
-
 export const deleteTask = async (taskId: string, userId: string) => {
   const task = await Task.findOne({
     where: { id: taskId, userId },
