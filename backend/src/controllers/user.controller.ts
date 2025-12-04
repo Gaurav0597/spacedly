@@ -1,9 +1,18 @@
 import {
   createUserSchema,
   loginUserSchema,
+  forgotPasswordSchema,
+  resetPasswordSchema,
 } from '../validations/user.validation';
 import { Request, Response } from 'express';
-import { userLogin, userRegister } from '../services/user.service';
+import {
+  userLogin,
+  userRegister,
+  initiateTwoFactorAuth,
+  verifyTwoFactorOtp,
+  forgotPasswordService,
+  resetPasswordService,
+} from '../services/user.service';
 import ApiResponse from '../utils/apiResponse';
 import asyncWrapper from '../utils/asyncWrapper';
 import { CustomRequest } from '../middlewares/auth.middleware';
@@ -12,6 +21,8 @@ import { generateOTP, otpTemplate } from '../helpers/otp';
 import HTTP_STATUS from '../constants';
 import { sendEmail } from '../utils/emailUtil';
 import { generateAccessToken, generateRefreshToken } from '../helpers/auth';
+import { setAuthCookies } from '../utils/cookieUtil';
+import { passwordResetTemplate } from '../helpers/emailTemplates';
 
 export const registerUser = asyncWrapper(
   async (req: Request, res: Response) => {
@@ -30,45 +41,36 @@ export const loginUser = asyncWrapper(async (req: Request, res: Response) => {
 
   await loginUserSchema.validateAsync({ email, password });
 
-  const user = await User.findOne({ where: { email } });
+  // Check if user has 2FA enabled
+  const user = await initiateTwoFactorAuth(email);
 
-  if (user && user.is_two_factor_enabled) {
+  if (user.is_two_factor_enabled) {
+    // Generate and send OTP
     const otp = generateOTP();
     user.two_factor_otp = otp;
     user.two_factor_otp_expiry = new Date(Date.now() + 5 * 60 * 1000);
-    console.log(user, 'user');
     await user.save();
-    console.log(user, otp, 'newuser');
+
     // Send OTP email
     await sendEmail(email, 'Your Login OTP', otpTemplate(otp));
+
     return ApiResponse.success(res, {}, 'Otp send to your registered Email ');
-  } else {
-    const { accessToken, refreshToken, user_data } = await userLogin({
-      email,
-      password,
-    });
-
-    // Send cookies
-    res.cookie('accessToken', accessToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
-      maxAge: 15 * 60 * 1000, // 15 mins
-    });
-
-    res.cookie('refreshToken', refreshToken, {
-      httpOnly: true,
-      secure: true,
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000, // 1d days
-    });
-
-    return ApiResponse.success(
-      res,
-      { user: user_data },
-      'User logged in Successfully',
-    );
   }
+
+  // Regular login without 2FA
+  const { accessToken, refreshToken, user_data } = await userLogin({
+    email,
+    password,
+  });
+
+  // Set cookies
+  setAuthCookies(res, accessToken, refreshToken);
+
+  return ApiResponse.success(
+    res,
+    { user: user_data },
+    'User logged in Successfully',
+  );
 });
 
 export const verifyOtp = asyncWrapper(async (req: Request, res: Response) => {
@@ -81,56 +83,19 @@ export const verifyOtp = asyncWrapper(async (req: Request, res: Response) => {
       HTTP_STATUS.BAD_REQUEST,
     );
   }
-  console.log(email, otp, 'console');
-  const user = await User.findOne({ where: { email } });
-  console.log(user, 'verifuser');
-  if (!user) {
-    return ApiResponse.error(res, 'User not found', HTTP_STATUS.NOT_FOUND);
-  }
 
-  // Check OTP
-  if (user.two_factor_otp !== otp) {
-    return ApiResponse.error(res, 'Invalid OTP', HTTP_STATUS.BAD_REQUEST);
-  }
+  // Verify OTP and generate tokens
+  const { accessToken, refreshToken, user_data } = await verifyTwoFactorOtp(
+    email,
+    otp,
+  );
 
-  // Check expiry
-  if (new Date() > new Date(user.two_factor_otp_expiry)) {
-    return ApiResponse.error(res, 'OTP expired', HTTP_STATUS.BAD_REQUEST);
-  }
+  // Set cookies
+  setAuthCookies(res, accessToken, refreshToken);
 
-  // OTP is valid → clear it
-  user.two_factor_otp = null;
-  user.two_factor_otp_expiry = null;
-
-  // Generate tokens
-  const accessToken = generateAccessToken(user.id, user.email);
-  const refreshToken = generateRefreshToken(user.id, user.email);
-  user.refresh_token = refreshToken;
-  await user.save();
-  // Send cookie
-  res.cookie('accessToken', accessToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'strict',
-    maxAge: 15 * 60 * 1000,
-  });
-
-  res.cookie('refreshToken', refreshToken, {
-    httpOnly: true,
-    secure: true,
-    sameSite: 'strict',
-    maxAge: 24 * 60 * 60 * 1000,
-  });
-
-  const userData = {
-    id: user.id,
-    name: user.name,
-    email: user.email,
-    is_two_factor_enabled: user.is_two_factor_enabled,
-  };
   return ApiResponse.success(
     res,
-    { user: userData },
+    { user: user_data },
     'OTP verified, user logged in successfully',
   );
 });
@@ -140,6 +105,11 @@ export const enable2FAauth = asyncWrapper(
     const { is_Enabled } = req.body;
     const { id } = req.user;
     const user = await User.findByPk(id);
+
+    if (!user) {
+      return ApiResponse.error(res, 'User not found', HTTP_STATUS.NOT_FOUND);
+    }
+
     user.is_two_factor_enabled = is_Enabled;
     await user.save();
     return ApiResponse.success(
@@ -149,3 +119,119 @@ export const enable2FAauth = asyncWrapper(
     );
   },
 );
+
+export const googleAuthCallback = asyncWrapper(
+  async (req: Request, res: Response) => {
+    const user = req.user as User;
+
+    if (!user) {
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/login?error=user_not_found`,
+      );
+    }
+
+    // Generate JWT tokens
+    const accessToken = generateAccessToken(user.id, user.email);
+    const refreshToken = generateRefreshToken(user.id, user.email);
+
+    // Save refresh token to database
+    user.refresh_token = refreshToken;
+    await user.save();
+
+    // Set cookies
+    setAuthCookies(res, accessToken, refreshToken);
+
+    // Redirect to frontend dashboard
+    res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
+  },
+);
+
+export const forgotPassword = asyncWrapper(
+  async (req: Request, res: Response) => {
+    const { email } = req.body;
+
+    await forgotPasswordSchema.validateAsync({ email });
+
+    const result = await forgotPasswordService(email);
+
+    // If user exists, send email
+    if (result.user) {
+      const resetUrl = `${process.env.FRONTEND_URL}/reset-password?token=${result.resetToken}`;
+
+      const emailHtml = passwordResetTemplate(resetUrl, result.user.name);
+
+      await sendEmail(
+        result.user.email,
+        'Password Reset Request - Spacedly',
+        emailHtml,
+      );
+    }
+
+    // Always return success message for security (don't reveal if email exists)
+    return ApiResponse.success(
+      res,
+      {},
+      'If the email exists, a password reset link has been sent',
+    );
+  },
+);
+
+export const resetPassword = asyncWrapper(
+  async (req: Request, res: Response) => {
+    const { token, password } = req.body;
+
+    await resetPasswordSchema.validateAsync({ token, password });
+
+    await resetPasswordService(token, password);
+
+    return ApiResponse.success(
+      res,
+      {},
+      'Password has been reset successfully. Please login with your new password.',
+    );
+  },
+);
+
+export const logout = asyncWrapper(
+  async (req: CustomRequest, res: Response) => {
+    const { id } = req.user!;
+
+    // Clear refresh token from database
+    const user = await User.findByPk(id);
+    if (user) {
+      user.refresh_token = null;
+      await user.save();
+    }
+
+    // Clear cookies
+    res.clearCookie('accessToken');
+    res.clearCookie('refreshToken');
+
+    return ApiResponse.success(res, {}, 'Logged out successfully');
+  },
+);
+
+export const getMe = asyncWrapper(async (req: CustomRequest, res: Response) => {
+  const { id } = req.user!;
+
+  const user = await User.findByPk(id, {
+    attributes: [
+      'id',
+      'name',
+      'email',
+      'is_two_factor_enabled',
+      'auth_provider',
+      'createdAt',
+    ],
+  });
+
+  if (!user) {
+    return ApiResponse.error(res, 'User not found', HTTP_STATUS.NOT_FOUND);
+  }
+
+  return ApiResponse.success(
+    res,
+    { user },
+    'User profile retrieved successfully',
+  );
+});
