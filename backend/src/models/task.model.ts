@@ -56,7 +56,7 @@ Task.init(
     tableName: 'tasks',
     timestamps: true,
     underscored: true,
-  },
+  }
 );
 
 export default Task;

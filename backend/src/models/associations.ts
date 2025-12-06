@@ -25,10 +25,7 @@ User.hasMany(Notification, { foreignKey: 'userId', as: 'notifications' });
 Notification.belongsTo(User, { foreignKey: 'userId', as: 'user' });
 
 // Task <-> Notification associations (optional relation)
-Task.hasMany(Notification, {
-  foreignKey: 'relatedTaskId',
-  as: 'notifications',
-});
+Task.hasMany(Notification, { foreignKey: 'relatedTaskId', as: 'notifications' });
 Notification.belongsTo(Task, { foreignKey: 'relatedTaskId', as: 'task' });
 
 export { User, Task, TaskAttachment, Reminder, Notification };

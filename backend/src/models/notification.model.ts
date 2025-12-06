@@ -14,15 +14,9 @@ export interface NotificationAttributes {
 }
 
 export interface NotificationCreationAttributes
-  extends Optional<
-    NotificationAttributes,
-    'id' | 'isRead' | 'relatedTaskId' | 'createdAt' | 'updatedAt'
-  > {}
+  extends Optional<NotificationAttributes, 'id' | 'isRead' | 'relatedTaskId' | 'createdAt' | 'updatedAt'> {}
 
-class Notification
-  extends Model<NotificationAttributes, NotificationCreationAttributes>
-  implements NotificationAttributes
-{
+class Notification extends Model<NotificationAttributes, NotificationCreationAttributes> implements NotificationAttributes {
   public id!: string;
   public userId!: string;
   public type!: 'overdue' | 'upcoming' | 'reminder' | 'general';
@@ -82,7 +76,7 @@ Notification.init(
     sequelize,
     tableName: 'notifications',
     timestamps: true,
-  },
+  }
 );
 
 export default Notification;

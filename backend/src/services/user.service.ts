@@ -144,10 +144,7 @@ export const resetPasswordService = async (
   });
 
   if (!user) {
-    throw new ApiError(
-      HTTP_STATUS.BAD_REQUEST,
-      'Invalid or expired reset token',
-    );
+    throw new ApiError(HTTP_STATUS.BAD_REQUEST, 'Invalid or expired reset token');
   }
 
   // Check if token has expired

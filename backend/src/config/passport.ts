@@ -10,14 +10,13 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      callbackURL:
-        process.env.GOOGLE_CALLBACK_URL || '/api/auth/google/callback',
+      callbackURL: process.env.GOOGLE_CALLBACK_URL || '/api/auth/google/callback',
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
         // Extract email from Google profile
         const email = profile.emails?.[0]?.value;
-
+        
         if (!email) {
           return done(new Error('No email found from Google'), null);
         }
@@ -52,8 +51,8 @@ passport.use(
       } catch (error) {
         return done(error as Error, null);
       }
-    },
-  ),
+    }
+  )
 );
 
 export default passport;

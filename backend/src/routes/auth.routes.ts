@@ -27,7 +27,7 @@ router.get(
   passport.authenticate('google', {
     scope: ['profile', 'email'],
     session: false,
-  }),
+  })
 );
 
 // Google OAuth callback
@@ -37,7 +37,7 @@ router.get(
     failureRedirect: `${process.env.FRONTEND_URL}/login?error=google_auth_failed`,
     session: false,
   }),
-  googleAuthCallback,
+  googleAuthCallback
 );
 
 export default router;

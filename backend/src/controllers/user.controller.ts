@@ -53,7 +53,7 @@ export const loginUser = asyncWrapper(async (req: Request, res: Response) => {
 
     // Send OTP email
     await sendEmail(email, 'Your Login OTP', otpTemplate(otp));
-
+    
     return ApiResponse.success(res, {}, 'Otp send to your registered Email ');
   }
 
@@ -105,11 +105,11 @@ export const enable2FAauth = asyncWrapper(
     const { is_Enabled } = req.body;
     const { id } = req.user;
     const user = await User.findByPk(id);
-
+    
     if (!user) {
       return ApiResponse.error(res, 'User not found', HTTP_STATUS.NOT_FOUND);
     }
-
+    
     user.is_two_factor_enabled = is_Enabled;
     await user.save();
     return ApiResponse.success(
@@ -125,9 +125,7 @@ export const googleAuthCallback = asyncWrapper(
     const user = req.user as User;
 
     if (!user) {
-      return res.redirect(
-        `${process.env.FRONTEND_URL}/login?error=user_not_found`,
-      );
+      return res.redirect(`${process.env.FRONTEND_URL}/login?error=user_not_found`);
     }
 
     // Generate JWT tokens
@@ -195,7 +193,7 @@ export const resetPassword = asyncWrapper(
 export const logout = asyncWrapper(
   async (req: CustomRequest, res: Response) => {
     const { id } = req.user!;
-
+    
     // Clear refresh token from database
     const user = await User.findByPk(id);
     if (user) {
@@ -211,27 +209,18 @@ export const logout = asyncWrapper(
   },
 );
 
-export const getMe = asyncWrapper(async (req: CustomRequest, res: Response) => {
-  const { id } = req.user!;
+export const getMe = asyncWrapper(
+  async (req: CustomRequest, res: Response) => {
+    const { id } = req.user!;
 
-  const user = await User.findByPk(id, {
-    attributes: [
-      'id',
-      'name',
-      'email',
-      'is_two_factor_enabled',
-      'auth_provider',
-      'createdAt',
-    ],
-  });
+    const user = await User.findByPk(id, {
+      attributes: ['id', 'name', 'email', 'is_two_factor_enabled', 'auth_provider', 'createdAt'],
+    });
 
-  if (!user) {
-    return ApiResponse.error(res, 'User not found', HTTP_STATUS.NOT_FOUND);
-  }
+    if (!user) {
+      return ApiResponse.error(res, 'User not found', HTTP_STATUS.NOT_FOUND);
+    }
 
-  return ApiResponse.success(
-    res,
-    { user },
-    'User profile retrieved successfully',
-  );
-});
+    return ApiResponse.success(res, { user }, 'User profile retrieved successfully');
+  },
+);

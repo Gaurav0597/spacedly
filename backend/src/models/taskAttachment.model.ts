@@ -60,7 +60,7 @@ TaskAttachment.init(
     underscored: true,
     createdAt: 'created_at',
     updatedAt: false,
-  },
+  }
 );
 
 export default TaskAttachment;

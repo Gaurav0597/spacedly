@@ -66,7 +66,7 @@ Reminder.init(
     underscored: true,
     createdAt: 'created_at',
     updatedAt: false,
-  },
+  }
 );
 
 export default Reminder;

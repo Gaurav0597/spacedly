@@ -7,12 +7,9 @@ export const createTaskSchema = Joi.object({
     'string.max': 'Title cannot exceed 255 characters',
   }),
   description: Joi.string().allow('').optional(),
-  category: Joi.string()
-    .valid('Study', 'Work', 'Personal')
-    .required()
-    .messages({
-      'any.only': 'Category must be one of: Study, Work, Personal',
-    }),
+  category: Joi.string().valid('Study', 'Work', 'Personal').required().messages({
+    'any.only': 'Category must be one of: Study, Work, Personal',
+  }),
   priority: Joi.string().valid('Low', 'Medium', 'High').required().messages({
     'any.only': 'Priority must be one of: Low, Medium, High',
   }),
